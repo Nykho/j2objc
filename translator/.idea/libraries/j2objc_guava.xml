@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="j2objc_guava">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../guava/build_result/j2objc_guava.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

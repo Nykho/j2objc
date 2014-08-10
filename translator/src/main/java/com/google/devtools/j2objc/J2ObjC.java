@@ -136,7 +136,7 @@ public class J2ObjC {
     }
   }
 
-  private static JdtParser createParser() {
+  public static JdtParser createParser() {
     JdtParser parser = new JdtParser();
     parser.addClasspathEntries(Options.getClassPathEntries());
     parser.addClasspathEntries(Options.getBootClasspath());

@@ -40,20 +40,21 @@ public class MethodMapper {
         public boolean visit(org.eclipse.jdt.core.dom.MethodDeclaration node) {
           IMethodBinding binding = Types.getMethodBinding(node);
           JavaMethod desc = JavaMethod.getJavaMethod(binding);
-          //if(!methodMappings.containsKey(desc.getKey()) && desc.getClazz().startsWith("com.laundrapp")  && node.parameters().size() > 0) {
-          StringBuilder method = new StringBuilder("LA").append(binding.getDeclaringClass().getName()).append(" ").append(node.isConstructor() ? "init" : node.getName());
-          boolean first = true;
-          for (SingleVariableDeclaration parameter : (List<SingleVariableDeclaration>)node.parameters()) {
-            if(!first && !parameter.getName().equals(Types.EMPTY_PARAMETER_NAME)) {
-              method.append(parameter.getName());
+          if(node.parameters().size() > 0 && !node.isConstructor()) {
+            String className = binding.getDeclaringClass().getQualifiedName().replace('$', '_');
+            className = className.replace('$', '_').substring(className.lastIndexOf('.') + 1, className.length());
+            StringBuilder method = new StringBuilder(desc.getClazz().startsWith("com.laundrapp") ? "LA" : "HP").append(className).append(" ").append(node.isConstructor() ? "init" : node.getName());
+            boolean first = true;
+            for (SingleVariableDeclaration parameter : (List<SingleVariableDeclaration>)node.parameters()) {
+              if(!first && !parameter.getName().equals(Types.EMPTY_PARAMETER_NAME)) {
+                method.append(parameter.getName());
+              }
+              method.append(String.format(":(%s)%s ",
+                  NameTable.getSpecificObjCType(Types.getTypeBinding(parameter.getType())), parameter.getName()));
+              first = false;
             }
-            method.append(String.format(":(%s)%s ",
-                NameTable.getSpecificObjCType(Types.getTypeBinding(parameter.getType())), parameter.getName()));
-            first = false;
+            System.out.println(desc.getKey() +  " = " + method.toString());
           }
-          System.out.println(desc.getKey() +  " = " + method.toString());
-          //}
-
           return false; // do not continue to avoid usage info
         }
 

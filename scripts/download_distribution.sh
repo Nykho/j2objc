@@ -26,4 +26,4 @@ echo "fetching j2objc"
 curl -OL https://github.com/laundrapp/j2objc/releases/download/${j2objc_version}/j2objc-${j2objc_version}.zip
 #echo "${sha1_checksum}  j2objc-${j2objc_version}.zip" | shasum -c
 unzip -o -q j2objc-${j2objc_version}.zip
-#mv j2objc-${j2objc_version} dist
+mv j2objc-${j2objc_version} dist

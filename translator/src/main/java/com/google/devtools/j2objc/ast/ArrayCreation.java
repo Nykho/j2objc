@@ -14,18 +14,67 @@
 
 package com.google.devtools.j2objc.ast;
 
+import org.eclipse.jdt.core.dom.ITypeBinding;
+
+import java.util.List;
+
 /**
  * Node type for array creation.
  */
 public class ArrayCreation extends Expression {
 
+  private final ChildLink<ArrayType> arrayType =
+      ChildLink.create(ArrayType.class, this);
+  private final ChildList<Expression> dimensions = ChildList.create(Expression.class, this);
+  private final ChildLink<ArrayInitializer> initializer =
+      ChildLink.create(ArrayInitializer.class, this);
+
+  public ArrayCreation(org.eclipse.jdt.core.dom.ArrayCreation jdtNode) {
+    super(jdtNode);
+    arrayType.set((ArrayType) TreeConverter.convert(jdtNode.getType()));
+    for (Object dimension : jdtNode.dimensions()) {
+      dimensions.add((Expression) TreeConverter.convert(dimension));
+    }
+    initializer.set((ArrayInitializer) TreeConverter.convert(jdtNode.getInitializer()));
+  }
+
   public ArrayCreation(ArrayCreation other) {
     super(other);
+    arrayType.copyFrom(other.getType());
+    dimensions.copyFrom(other.getDimensions());
+    initializer.copyFrom(other.getInitializer());
+  }
+
+  @Override
+  public Kind getKind() {
+    return Kind.ARRAY_CREATION;
+  }
+
+  @Override
+  public ITypeBinding getTypeBinding() {
+    ArrayType arrayTypeNode = arrayType.get();
+    return arrayTypeNode != null ? arrayTypeNode.getTypeBinding() : null;
+  }
+
+  public ArrayType getType() {
+    return arrayType.get();
+  }
+
+  public List<Expression> getDimensions() {
+    return dimensions;
+  }
+
+  public ArrayInitializer getInitializer() {
+    return initializer.get();
   }
 
   @Override
   protected void acceptInner(TreeVisitor visitor) {
-    visitor.visit(this);
+    if (visitor.visit(this)) {
+      arrayType.accept(visitor);
+      dimensions.accept(visitor);
+      initializer.accept(visitor);
+    }
     visitor.endVisit(this);
   }
 

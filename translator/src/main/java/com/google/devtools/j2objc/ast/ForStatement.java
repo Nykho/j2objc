@@ -46,6 +46,11 @@ public class ForStatement extends Statement {
     body.copyFrom(other.getBody());
   }
 
+  @Override
+  public Kind getKind() {
+    return Kind.FOR_STATEMENT;
+  }
+
   public List<Expression> getInitializers() {
     return initializers;
   }
@@ -54,12 +59,20 @@ public class ForStatement extends Statement {
     return expression.get();
   }
 
+  public void setExpression(Expression newExpression) {
+    expression.set(newExpression);
+  }
+
   public List<Expression> getUpdaters() {
     return updaters;
   }
 
   public Statement getBody() {
     return body.get();
+  }
+
+  public void setBody(Statement newBody) {
+    body.set(newBody);
   }
 
   @Override

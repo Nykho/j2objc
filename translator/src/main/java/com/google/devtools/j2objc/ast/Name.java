@@ -14,10 +14,12 @@
 
 package com.google.devtools.j2objc.ast;
 
-import com.google.devtools.j2objc.types.Types;
 import com.google.devtools.j2objc.util.BindingUtil;
 
 import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.jdt.core.dom.ITypeBinding;
+
+import java.util.List;
 
 /**
  * Base node class for a name.
@@ -28,7 +30,7 @@ public abstract class Name extends Expression {
 
   public Name(org.eclipse.jdt.core.dom.Name jdtNode) {
     super(jdtNode);
-    binding = Types.getBindingUnsafe(jdtNode);
+    binding = jdtNode.resolveBinding();
   }
 
   public Name(Name other) {
@@ -37,14 +39,34 @@ public abstract class Name extends Expression {
   }
 
   public Name(IBinding binding) {
-    super(BindingUtil.toTypeBinding(binding));
     this.binding = binding;
+  }
+
+  public static Name newName(Name qualifier, IBinding binding) {
+    return qualifier == null ? new SimpleName(binding) : new QualifiedName(binding, qualifier);
+  }
+
+  public static Name newName(List<? extends IBinding> path) {
+    Name name = null;
+    for (IBinding binding : path) {
+      name = newName(name, binding);
+    }
+    return name;
   }
 
   public abstract String getFullyQualifiedName();
 
   public IBinding getBinding() {
     return binding;
+  }
+
+  @Override
+  public ITypeBinding getTypeBinding() {
+    return BindingUtil.toTypeBinding(binding);
+  }
+
+  public void setBinding(IBinding newBinding) {
+    binding = newBinding;
   }
 
   public boolean isQualifiedName() {

@@ -14,6 +14,8 @@
 
 package com.google.devtools.j2objc.ast;
 
+import org.eclipse.jdt.core.dom.ITypeBinding;
+
 import java.util.List;
 
 /**
@@ -39,6 +41,17 @@ public class VariableDeclarationExpression extends Expression {
     super(other);
     type.copyFrom(other.getType());
     fragments.copyFrom(other.getFragments());
+  }
+
+  @Override
+  public Kind getKind() {
+    return Kind.VARIABLE_DECLARATION_EXPRESSION;
+  }
+
+  @Override
+  public ITypeBinding getTypeBinding() {
+    Type typeNode = type.get();
+    return typeNode != null ? typeNode.getTypeBinding() : null;
   }
 
   public Type getType() {

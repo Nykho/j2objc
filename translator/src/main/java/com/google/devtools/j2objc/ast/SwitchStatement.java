@@ -38,8 +38,17 @@ public class SwitchStatement extends Statement {
     statements.copyFrom(other.getStatements());
   }
 
+  @Override
+  public Kind getKind() {
+    return Kind.SWITCH_STATEMENT;
+  }
+
   public Expression getExpression() {
     return expression.get();
+  }
+
+  public void setExpression(Expression newExpression) {
+    expression.set(newExpression);
   }
 
   public List<Statement> getStatements() {

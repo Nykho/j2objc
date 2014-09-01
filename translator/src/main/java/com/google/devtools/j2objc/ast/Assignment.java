@@ -15,7 +15,8 @@
 package com.google.devtools.j2objc.ast;
 
 import com.google.common.collect.Maps;
-import com.google.devtools.j2objc.types.Types;
+
+import org.eclipse.jdt.core.dom.ITypeBinding;
 
 import java.util.Map;
 
@@ -38,7 +39,7 @@ public class Assignment extends Expression {
     BIT_XOR_ASSIGN("^="),
     REMAINDER_ASSIGN("%="),
     LEFT_SHIFT_ASSIGN("<<="),
-    RIGHT_SHIFT_ASSIGN(">>="),
+    RIGHT_SHIFT_SIGNED_ASSIGN(">>="),
     RIGHT_SHIFT_UNSIGNED_ASSIGN(">>>=");
 
     private final String opString;
@@ -68,15 +69,12 @@ public class Assignment extends Expression {
   }
 
   private Operator operator;
-  // TODO(kstanger): Eventually remove this.
-  private boolean isDeferredFieldSetter = false;
   private ChildLink<Expression> leftHandSide = ChildLink.create(Expression.class, this);
   private ChildLink<Expression> rightHandSide = ChildLink.create(Expression.class, this);
 
   public Assignment(org.eclipse.jdt.core.dom.Assignment jdtNode) {
     super(jdtNode);
     operator = Operator.fromJdtOperator(jdtNode.getOperator());
-    isDeferredFieldSetter = Types.hasDeferredFieldSetter(jdtNode);
     leftHandSide.set((Expression) TreeConverter.convert(jdtNode.getLeftHandSide()));
     rightHandSide.set((Expression) TreeConverter.convert(jdtNode.getRightHandSide()));
   }
@@ -84,16 +82,25 @@ public class Assignment extends Expression {
   public Assignment(Assignment other) {
     super(other);
     operator = other.getOperator();
-    isDeferredFieldSetter = other.isDeferredFieldSetter();
     leftHandSide.copyFrom(other.getLeftHandSide());
     rightHandSide.copyFrom(other.getRightHandSide());
   }
 
   public Assignment(Expression lhs, Expression rhs) {
-    super(lhs.getTypeBinding());
     operator = Operator.ASSIGN;
     leftHandSide.set(lhs);
     rightHandSide.set(rhs);
+  }
+
+  @Override
+  public Kind getKind() {
+    return Kind.ASSIGNMENT;
+  }
+
+  @Override
+  public ITypeBinding getTypeBinding() {
+    Expression leftHandSideNode = leftHandSide.get();
+    return leftHandSideNode != null ? leftHandSideNode.getTypeBinding() : null;
   }
 
   public Operator getOperator() {
@@ -102,14 +109,6 @@ public class Assignment extends Expression {
 
   public void setOperator(Operator newOperator) {
     operator = newOperator;
-  }
-
-  public boolean isDeferredFieldSetter() {
-    return isDeferredFieldSetter;
-  }
-
-  public void setIsDeferredFieldSetter(boolean newIsDeferredFieldSetter) {
-    isDeferredFieldSetter = newIsDeferredFieldSetter;
   }
 
   public Expression getLeftHandSide() {

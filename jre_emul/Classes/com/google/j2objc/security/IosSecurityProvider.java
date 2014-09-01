@@ -17,6 +17,9 @@
 
 package com.google.j2objc.security;
 
+import com.google.j2objc.security.cert.IosCertificateFactory;
+import com.google.j2objc.security.cert.IosX509Certificate;
+
 import java.security.Provider;
 
 /**
@@ -36,6 +39,9 @@ public class IosSecurityProvider extends Provider {
 
     // Secure random implementation.
     put("SecureRandom.SHA1PRNG", PREFIX + "IosSecureRandomImpl");
+
+    // X509 certificate provider.
+    put("CertificateFactory.X.509", "com.google.j2objc.security.cert.IosCertificateFactory");
 
     /* === Message Digests === */
     put("MessageDigest.SHA-1", PREFIX + "IosSHAMessageDigest$SHA1");
@@ -60,4 +66,11 @@ public class IosSecurityProvider extends Provider {
     put("Alg.Alias.MessageDigest.1.2.840.113549.2.5", "MD5");
   }
 
+  // Reference all dynamically loaded classes, so they are linked into apps.
+  private static final Class<?>[] unused = {
+    IosMD5MessageDigest.class,
+    IosSecureRandomImpl.class,
+    IosSHAMessageDigest.class,
+    IosCertificateFactory.class
+  };
 }

@@ -24,6 +24,7 @@ import com.google.devtools.j2objc.translate.AnonymousClassConverter;
 import com.google.devtools.j2objc.translate.ArrayRewriter;
 import com.google.devtools.j2objc.translate.Autoboxer;
 import com.google.devtools.j2objc.translate.ComplexExpressionExtractor;
+import com.google.devtools.j2objc.translate.ConstantBranchPruner;
 import com.google.devtools.j2objc.translate.CopyAllFieldsWriter;
 import com.google.devtools.j2objc.translate.DestructorGenerator;
 import com.google.devtools.j2objc.translate.EnhancedForRewriter;
@@ -45,7 +46,6 @@ import com.google.devtools.j2objc.types.HeaderImportCollector;
 import com.google.devtools.j2objc.types.IOSTypeBinding;
 import com.google.devtools.j2objc.types.ImplementationImportCollector;
 import com.google.devtools.j2objc.types.Import;
-import com.google.devtools.j2objc.types.Types;
 import com.google.devtools.j2objc.util.ErrorUtil;
 import com.google.devtools.j2objc.util.JdtParser;
 import com.google.devtools.j2objc.util.TimeTracker;
@@ -116,10 +116,12 @@ class TranslationProcessor extends FileProcessor {
     processedFiles.add(relativePath);
     seenFiles.add(relativePath);
 
-    CompilationUnit newUnit = applyMutations(unit, path, source, ticker);
+    CompilationUnit newUnit = TreeConverter.convertCompilationUnit(unit, path, source);
+
+    applyMutations(newUnit, ticker);
     ticker.tick("Tree mutations");
 
-    if (unit.types().isEmpty()) {
+    if (unit.types().isEmpty() && !newUnit.getMainTypeName().endsWith("package_info")) {
       logger.finest("skipping dead file " + path);
       return;
     }
@@ -145,9 +147,7 @@ class TranslationProcessor extends FileProcessor {
    * also modified to add support for iOS memory management, extract inner
    * classes, etc.
    */
-  public static CompilationUnit applyMutations(
-      org.eclipse.jdt.core.dom.CompilationUnit unit, String path, String source,
-      TimeTracker ticker) {
+  public static void applyMutations(CompilationUnit unit, TimeTracker ticker) {
     ticker.push();
 
     OuterReferenceResolver.resolve(unit);
@@ -166,14 +166,14 @@ class TranslationProcessor extends FileProcessor {
     ticker.tick("EnhancedForRewriter");
 
     // Add auto-boxing conversions.
-    new Autoboxer(unit.getAST()).run(unit);
+    new Autoboxer().run(unit);
     ticker.tick("Autoboxer");
 
     // Extract inner and anonymous classes
-    new AnonymousClassConverter(unit).run(unit);
+    new AnonymousClassConverter().run(unit);
     ticker.tick("AnonymousClassConverter");
     new InnerClassExtractor(unit).run(unit);
-    ticker.tick("InnerClassConverter");
+    ticker.tick("InnerClassExtractor");
 
     // Normalize init statements
     new InitializationNormalizer().run(unit);
@@ -197,6 +197,9 @@ class TranslationProcessor extends FileProcessor {
     new NilCheckResolver().run(unit);
     ticker.tick("NilCheckResolver");
 
+    new ArrayRewriter().run(unit);
+    ticker.tick("ArrayRewriter");
+
     // Translate core Java type use to similar iOS types
     new JavaToIOSTypeConverter().run(unit);
     ticker.tick("JavaToIOSTypeConverter");
@@ -205,11 +208,8 @@ class TranslationProcessor extends FileProcessor {
       // Method maps are loaded here so tests can call translate() directly.
       loadMappingFiles();
     }
-    new JavaToIOSMethodTranslator(unit.getAST(), methodMappings).run(unit);
+    new JavaToIOSMethodTranslator(methodMappings).run(unit);
     ticker.tick("JavaToIOSMethodTranslator");
-
-    new ArrayRewriter().run(unit);
-    ticker.tick("ArrayRewriter");
 
     new StaticVarRewriter().run(unit);
     ticker.tick("StaticVarRewriter");
@@ -219,38 +219,34 @@ class TranslationProcessor extends FileProcessor {
     TypeSorter.sortTypes(unit);
     ticker.tick("TypeSorter");
 
-    // Verify all modified nodes have type bindings
-    Types.verifyNode(unit);
-
-    CompilationUnit newUnit = TreeConverter.convertCompilationUnit(unit, path, source);
-
     // Add dealloc/finalize method(s), if necessary.  This is done
     // after inner class extraction, so that each class releases
     // only its own instance variables.
-    new DestructorGenerator().run(newUnit);
+    new DestructorGenerator().run(unit);
     ticker.tick("DestructorGenerator");
 
-    new CopyAllFieldsWriter().run(newUnit);
+    new CopyAllFieldsWriter().run(unit);
     ticker.tick("CopyAllFieldsWriter");
 
-    new OperatorRewriter().run(newUnit);
+    new OperatorRewriter().run(unit);
     ticker.tick("OperatorRewriter");
 
     if (Options.finalMethodsAsFunctions()) {
-      new Functionizer().run(newUnit);
+      new Functionizer().run(unit);
       ticker.tick("Functionizer");
     }
 
+    new ConstantBranchPruner().run(unit);
+    ticker.tick("ConstantBranchPruner");
+
     for (Plugin plugin : Options.getPlugins()) {
-      plugin.processUnit(newUnit);
+      plugin.processUnit(unit);
     }
 
     // Make sure we still have a valid AST.
-    newUnit.validate();
+    unit.validate();
 
     ticker.pop();
-
-    return newUnit;
   }
 
   public static void generateObjectiveCSource(CompilationUnit unit, TimeTracker ticker) {
@@ -306,7 +302,7 @@ class TranslationProcessor extends FileProcessor {
       return;  // Ignore core types.
     }
     String typeName = type.getErasure().getQualifiedName();
-    String sourceName = typeName.replace('.', File.pathSeparatorChar) + ".java";
+    String sourceName = typeName.replace('.', File.separatorChar) + ".java";
     if (seenFiles.contains(sourceName)) {
       return;
     }

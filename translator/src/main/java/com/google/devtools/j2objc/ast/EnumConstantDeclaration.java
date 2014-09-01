@@ -14,8 +14,6 @@
 
 package com.google.devtools.j2objc.ast;
 
-import com.google.devtools.j2objc.types.Types;
-
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 
@@ -28,17 +26,21 @@ public class EnumConstantDeclaration extends BodyDeclaration {
 
   private IVariableBinding variableBinding = null;
   private IMethodBinding methodBinding = null;
-  private ChildLink<SimpleName> name = ChildLink.create(SimpleName.class, this);
-  private ChildList<Expression> arguments = ChildList.create(Expression.class, this);
+  private final ChildLink<SimpleName> name = ChildLink.create(SimpleName.class, this);
+  private final ChildList<Expression> arguments = ChildList.create(Expression.class, this);
+  private final ChildLink<AnonymousClassDeclaration> anonymousClassDeclaration =
+      ChildLink.create(AnonymousClassDeclaration.class, this);
 
   public EnumConstantDeclaration(org.eclipse.jdt.core.dom.EnumConstantDeclaration jdtNode) {
     super(jdtNode);
-    variableBinding = Types.getVariableBinding(jdtNode.getName());
-    methodBinding = Types.getMethodBinding(jdtNode);
+    variableBinding = jdtNode.resolveVariable();
+    methodBinding = jdtNode.resolveConstructorBinding();
     name.set((SimpleName) TreeConverter.convert(jdtNode.getName()));
     for (Object argument : jdtNode.arguments()) {
       arguments.add((Expression) TreeConverter.convert(argument));
     }
+    anonymousClassDeclaration.set((AnonymousClassDeclaration)
+        TreeConverter.convert(jdtNode.getAnonymousClassDeclaration()));
   }
 
   public EnumConstantDeclaration(EnumConstantDeclaration other) {
@@ -47,6 +49,12 @@ public class EnumConstantDeclaration extends BodyDeclaration {
     methodBinding = other.getMethodBinding();
     name.copyFrom(other.getName());
     arguments.copyFrom(other.getArguments());
+    anonymousClassDeclaration.copyFrom(other.getAnonymousClassDeclaration());
+  }
+
+  @Override
+  public Kind getKind() {
+    return Kind.ENUM_CONSTANT_DECLARATION;
   }
 
   public IVariableBinding getVariableBinding() {
@@ -57,12 +65,24 @@ public class EnumConstantDeclaration extends BodyDeclaration {
     return methodBinding;
   }
 
+  public void setMethodBinding(IMethodBinding newMethodBinding) {
+    methodBinding = newMethodBinding;
+  }
+
   public SimpleName getName() {
     return name.get();
   }
 
   public List<Expression> getArguments() {
     return arguments;
+  }
+
+  public AnonymousClassDeclaration getAnonymousClassDeclaration() {
+    return anonymousClassDeclaration.get();
+  }
+
+  public void setAnonymousClassDeclaration(AnonymousClassDeclaration newAnonymousClassDeclaration) {
+    anonymousClassDeclaration.set(newAnonymousClassDeclaration);
   }
 
   @Override
@@ -72,6 +92,7 @@ public class EnumConstantDeclaration extends BodyDeclaration {
       annotations.accept(visitor);
       name.accept(visitor);
       arguments.accept(visitor);
+      anonymousClassDeclaration.accept(visitor);
     }
     visitor.endVisit(this);
   }

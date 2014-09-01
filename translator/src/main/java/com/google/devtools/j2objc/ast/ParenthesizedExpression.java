@@ -14,6 +14,8 @@
 
 package com.google.devtools.j2objc.ast;
 
+import org.eclipse.jdt.core.dom.ITypeBinding;
+
 /**
  * Adds parentheses to a wrapped expression.
  */
@@ -31,8 +33,45 @@ public class ParenthesizedExpression extends Expression {
     expression.copyFrom(other.getExpression());
   }
 
+  public ParenthesizedExpression(Expression expression) {
+    this.expression.set(expression);
+  }
+
+  public ParenthesizedExpression() {}
+
+  // Static factory avoids conflict with the copy constructor
+  public static ParenthesizedExpression parenthesize(Expression expression) {
+    return new ParenthesizedExpression(expression);
+  }
+
+  /**
+   * Wraps the given expression with a ParenthesizedExpression and replaces it
+   * in the tree.
+   */
+  public static ParenthesizedExpression parenthesizeAndReplace(Expression expression) {
+    ParenthesizedExpression newExpr = new ParenthesizedExpression();
+    expression.replaceWith(newExpr);
+    newExpr.setExpression(expression);
+    return newExpr;
+  }
+
+  @Override
+  public Kind getKind() {
+    return Kind.PARENTHESIZED_EXPRESSION;
+  }
+
+  @Override
+  public ITypeBinding getTypeBinding() {
+    Expression expressionNode = expression.get();
+    return expressionNode != null ? expressionNode.getTypeBinding() : null;
+  }
+
   public Expression getExpression() {
     return expression.get();
+  }
+
+  public void setExpression(Expression newExpression) {
+    expression.set(newExpression);
   }
 
   @Override

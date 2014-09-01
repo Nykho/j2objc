@@ -16,6 +16,8 @@ package com.google.devtools.j2objc.ast;
 
 import com.google.common.collect.Maps;
 
+import org.eclipse.jdt.core.dom.ITypeBinding;
+
 import java.util.Map;
 
 /**
@@ -60,19 +62,38 @@ public class PrefixExpression extends Expression {
     }
   }
 
+  private ITypeBinding typeBinding = null;
   private Operator operator = null;
   private ChildLink<Expression> operand = ChildLink.create(Expression.class, this);
 
   public PrefixExpression(org.eclipse.jdt.core.dom.PrefixExpression jdtNode) {
     super(jdtNode);
+    typeBinding = jdtNode.resolveTypeBinding();
     operator = Operator.fromJdtOperator(jdtNode.getOperator());
     operand.set((Expression) TreeConverter.convert(jdtNode.getOperand()));
   }
 
   public PrefixExpression(PrefixExpression other) {
     super(other);
+    typeBinding = other.getTypeBinding();
     operator = other.getOperator();
     operand.copyFrom(other.getOperand());
+  }
+
+  public PrefixExpression(ITypeBinding typeBinding, Operator operator, Expression operand) {
+    this.typeBinding = typeBinding;
+    this.operator = operator;
+    this.operand.set(operand);
+  }
+
+  @Override
+  public Kind getKind() {
+    return Kind.PREFIX_EXPRESSION;
+  }
+
+  @Override
+  public ITypeBinding getTypeBinding() {
+    return typeBinding;
   }
 
   public Operator getOperator() {
@@ -81,6 +102,10 @@ public class PrefixExpression extends Expression {
 
   public Expression getOperand() {
     return operand.get();
+  }
+
+  public void setOperand(Expression newOperand) {
+    operand.set(newOperand);
   }
 
   @Override

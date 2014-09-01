@@ -16,9 +16,9 @@ package com.google.devtools.j2objc.ast;
 
 import com.google.common.base.Preconditions;
 import com.google.devtools.j2objc.types.IOSMethodBinding;
-import com.google.devtools.j2objc.types.Types;
 
 import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.ITypeBinding;
 
 import java.util.List;
 
@@ -34,7 +34,7 @@ public class MethodInvocation extends Expression {
 
   public MethodInvocation(org.eclipse.jdt.core.dom.MethodInvocation jdtNode) {
     super(jdtNode);
-    methodBinding = Types.getMethodBinding(jdtNode);
+    methodBinding = jdtNode.resolveMethodBinding();
     expression.set((Expression) TreeConverter.convert(jdtNode.getExpression()));
     name.set((SimpleName) TreeConverter.convert(jdtNode.getName()));
     for (Object argument : jdtNode.arguments()) {
@@ -51,10 +51,14 @@ public class MethodInvocation extends Expression {
   }
 
   public MethodInvocation(IMethodBinding binding, Expression expression) {
-    super(binding.getReturnType());
     methodBinding = binding;
     this.expression.set(expression);
     name.set(new SimpleName(binding));
+  }
+
+  @Override
+  public Kind getKind() {
+    return Kind.METHOD_INVOCATION;
   }
 
   // TODO(kstanger): This should eventually be a PrefixExpression node.
@@ -65,8 +69,25 @@ public class MethodInvocation extends Expression {
     return node;
   }
 
+  // TODO(kstanger): This should eventually be a PrefixExpression node.
+  public static MethodInvocation newDereference(Expression expression) {
+    MethodInvocation node = new MethodInvocation(
+        IOSMethodBinding.newDereference(expression.getTypeBinding()), null);
+    node.getArguments().add(expression);
+    return node;
+  }
+
   public IMethodBinding getMethodBinding() {
     return methodBinding;
+  }
+
+  public void setMethodBinding(IMethodBinding newMethodBinding) {
+    methodBinding = newMethodBinding;
+  }
+
+  @Override
+  public ITypeBinding getTypeBinding() {
+    return methodBinding != null ? methodBinding.getReturnType() : null;
   }
 
   public Expression getExpression() {
@@ -79,6 +100,10 @@ public class MethodInvocation extends Expression {
 
   public SimpleName getName() {
     return name.get();
+  }
+
+  public void setName(SimpleName newName) {
+    name.set(newName);
   }
 
   public List<Expression> getArguments() {

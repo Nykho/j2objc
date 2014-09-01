@@ -87,7 +87,6 @@ import com.google.devtools.j2objc.ast.VariableDeclarationExpression;
 import com.google.devtools.j2objc.ast.VariableDeclarationFragment;
 import com.google.devtools.j2objc.ast.VariableDeclarationStatement;
 import com.google.devtools.j2objc.ast.WhileStatement;
-import com.google.devtools.j2objc.types.GeneratedMethodBinding;
 import com.google.devtools.j2objc.types.IOSMethod;
 import com.google.devtools.j2objc.types.IOSMethodBinding;
 import com.google.devtools.j2objc.types.IOSTypeBinding;
@@ -126,10 +125,6 @@ public class StatementGenerator extends TreeVisitor {
   // resolved type of the expression is known to be "id".
   private final Map<Expression, Boolean> needsCastNodes = Maps.newHashMap();
 
-  private static final String EXPONENTIAL_FLOATING_POINT_REGEX =
-      "[+-]?\\d*\\.?\\d*[eE][+-]?\\d+";
-  private static final String FLOATING_POINT_SUFFIX_REGEX = ".*[fFdD]";
-  private static final String HEX_LITERAL_REGEX = "0[xX].*";
   private static final Pattern TRIGRAPH_REGEX = Pattern.compile("@\".*\\?\\?[=/'()!<>-].*\"");
 
   public static String generate(
@@ -344,36 +339,12 @@ public class StatementGenerator extends TreeVisitor {
 
   @Override
   public boolean visit(Assignment node) {
-    if (node.isDeferredFieldSetter()) {
-      printDeferredFieldSetter(node);
-      return false;
-    }
     node.getLeftHandSide().accept(this);
     buffer.append(' ');
     buffer.append(getOperatorStr(node.getOperator()));
     buffer.append(' ');
     node.getRightHandSide().accept(this);
     return false;
-  }
-
-  private void printDeferredFieldSetter(Assignment node) {
-    Expression lhs = node.getLeftHandSide();
-    IVariableBinding var = TreeUtil.getVariableBinding(lhs);
-    ITypeBinding declaringType = var.getDeclaringClass().getTypeDeclaration();
-    String setterName = String.format("%s_set_%s", NameTable.getFullName(declaringType),
-        NameTable.javaFieldToObjC(NameTable.getName(var)));
-    buffer.append(setterName);
-    buffer.append('(');
-    if (lhs instanceof QualifiedName) {
-      ((QualifiedName) lhs).getQualifier().accept(this);
-    } else if (lhs instanceof FieldAccess) {
-      ((FieldAccess) lhs).getExpression().accept(this);
-    } else {
-      buffer.append("self");
-    }
-    buffer.append(", ");
-    node.getRightHandSide().accept(this);
-    buffer.append(')');
   }
 
   private static String getOperatorStr(Assignment.Operator op) {
@@ -547,21 +518,10 @@ public class StatementGenerator extends TreeVisitor {
     ITypeBinding type = node.getType().getTypeBinding();
     boolean castPrinted = maybePrintCastFromId(node);
     buffer.append(useReferenceCounting ? "[[[" : "[[");
-    ITypeBinding outerType = type.getDeclaringClass();
     buffer.append(NameTable.getFullName(type));
     buffer.append(" alloc] init");
     IMethodBinding method = node.getMethodBinding();
     List<Expression> arguments = node.getArguments();
-    if (node.getExpression() != null && type.isMember() && arguments.size() > 0
-        && !Types.getTypeBinding(arguments.get(0)).isEqualTo(outerType)) {
-      // This is calling an untranslated "Outer.new Inner()" method,
-      // so update its binding and arguments as if it had been translated.
-      GeneratedMethodBinding newBinding = new GeneratedMethodBinding(method);
-      newBinding.addParameter(0, outerType);
-      method = newBinding;
-      arguments = Lists.newArrayList(arguments);
-      arguments.add(0, node.getExpression());
-    }
     printArguments(method, arguments);
     buffer.append(']');
     if (useReferenceCounting) {
@@ -842,7 +802,7 @@ public class StatementGenerator extends TreeVisitor {
       } else if (operand instanceof CharacterLiteral) {
         format.append(((CharacterLiteral) operand).charValue());
       } else if (operand instanceof NumberLiteral) {
-        format.append(((NumberLiteral) operand).getToken());
+        format.append(((NumberLiteral) operand).getValue().toString());
       } else {
         args.add(operand);
 
@@ -1027,14 +987,7 @@ public class StatementGenerator extends TreeVisitor {
       } else {
         buffer.append(", ");
       }
-      boolean hasNilCheck = arg.hasNilCheck();
-      if (hasNilCheck) {
-        buffer.append("nil_chk(");
-      }
       arg.accept(this);
-      if (hasNilCheck) {
-        buffer.append(')');
-      }
     }
     buffer.append(')');
   }
@@ -1047,20 +1000,7 @@ public class StatementGenerator extends TreeVisitor {
       buffer.append(NameTable.getFullName(binding.getDeclaringClass()));
     } else if (receiver != null) {
       needsCastNodes.put(receiver, true);
-      boolean castPrinted = false;
-      boolean hasNilCheck = receiver.hasNilCheck();
-      if (hasNilCheck) {
-        castPrinted = maybePrintCastFromId(receiver);
-        needsCastNodes.remove(receiver);
-        buffer.append("nil_chk(");
-      }
       receiver.accept(this);
-      if (hasNilCheck) {
-        buffer.append(')');
-        if (castPrinted) {
-          buffer.append(')');
-        }
-      }
     } else {
       buffer.append("self");
     }
@@ -1181,57 +1121,11 @@ public class StatementGenerator extends TreeVisitor {
   @Override
   public boolean visit(NumberLiteral node) {
     String token = node.getToken();
-    token = token.replace("_", "");  // Remove any embedded underscores.
-    ITypeBinding binding = node.getTypeBinding();
-    assert binding.isPrimitive();
-    char kind = binding.getKey().charAt(0);  // Primitive types have single-character keys.
-
-    // Convert floating point literals to C format.  No checking is
-    // necessary, since the format was verified by the parser.
-    if (kind == 'D' || kind == 'F') {
-      if (token.matches(FLOATING_POINT_SUFFIX_REGEX)) {
-        token = token.substring(0, token.length() - 1);  // strip suffix
-      }
-      if (token.matches(HEX_LITERAL_REGEX)) {
-        token = Double.toString(Double.parseDouble(token));
-      } else if (!token.matches(EXPONENTIAL_FLOATING_POINT_REGEX)) {
-        if (token.indexOf('.') == -1) {
-          token += ".0";  // C requires a fractional part, except in exponential form.
-        }
-      }
-      if (kind == 'F') {
-        token += 'f';
-      }
-    } else if (kind == 'J') {
-      if (token.equals("0x8000000000000000L") || token.equals("-9223372036854775808L")) {
-        // Convert min long literal to an expression
-        token = "-0x7fffffffffffffffLL - 1";
-      } else {
-        // Convert Java long literals to long long for Obj-C
-        if (token.startsWith("0x")) {
-          buffer.append("(long long) ");  // Ensure constant is treated as signed.
-        }
-        int pos = token.length() - 1;
-        int numLs = 0;
-        while (pos > 0 && token.charAt(pos) == 'L') {
-          numLs++;
-          pos--;
-        }
-
-        if (numLs == 1) {
-          token += 'L';
-        }
-      }
-    } else if (kind == 'I') {
-      if (token.startsWith("0x")) {
-        buffer.append("(int) ");  // Ensure constant is treated as signed.
-      }
-      if (token.equals("0x80000000") || token.equals("-2147483648")) {
-        // Convert min int literal to an expression
-        token = "-0x7fffffff - 1";
-      }
+    if (token != null) {
+      buffer.append(LiteralGenerator.fixNumberToken(token, node.getTypeBinding()));
+    } else {
+      buffer.append(LiteralGenerator.generate(node.getValue()));
     }
-    buffer.append(token);
     return false;
   }
 
@@ -1290,7 +1184,7 @@ public class StatementGenerator extends TreeVisitor {
 
   @Override
   public boolean visit(QualifiedType node) {
-    ITypeBinding binding = Types.getTypeBinding(node);
+    ITypeBinding binding = node.getTypeBinding();
     if (binding != null) {
       buffer.append(NameTable.getFullName(binding));
       return false;

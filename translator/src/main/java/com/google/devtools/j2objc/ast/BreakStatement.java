@@ -31,8 +31,19 @@ public class BreakStatement extends Statement {
     label.copyFrom(other.getLabel());
   }
 
+  public BreakStatement() {}
+
+  @Override
+  public Kind getKind() {
+    return Kind.BREAK_STATEMENT;
+  }
+
   public SimpleName getLabel() {
     return label.get();
+  }
+
+  public void setLabel(SimpleName newLabel) {
+    label.set(newLabel);
   }
 
   @Override

@@ -14,6 +14,10 @@
 
 package com.google.devtools.j2objc.ast;
 
+import com.google.devtools.j2objc.types.Types;
+
+import org.eclipse.jdt.core.dom.ITypeBinding;
+
 /**
  * Either "true" or "false".
  */
@@ -29,6 +33,20 @@ public class BooleanLiteral extends Expression {
   public BooleanLiteral(BooleanLiteral other) {
     super(other);
     booleanValue = other.booleanValue();
+  }
+
+  public BooleanLiteral(boolean booleanValue) {
+    this.booleanValue = booleanValue;
+  }
+
+  @Override
+  public Kind getKind() {
+    return Kind.BOOLEAN_LITERAL;
+  }
+
+  @Override
+  public ITypeBinding getTypeBinding() {
+    return Types.resolveJavaType("boolean");
   }
 
   public boolean booleanValue() {

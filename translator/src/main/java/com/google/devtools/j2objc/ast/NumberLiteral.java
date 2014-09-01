@@ -14,25 +14,57 @@
 
 package com.google.devtools.j2objc.ast;
 
+import com.google.common.base.Preconditions;
+import com.google.devtools.j2objc.types.Types;
+
+import org.eclipse.jdt.core.dom.ITypeBinding;
+
 /**
  * Number literal node type.
  */
 public class NumberLiteral extends Expression {
 
   private String token = null;
+  private Number value = null;
 
   public NumberLiteral(org.eclipse.jdt.core.dom.NumberLiteral jdtNode) {
     super(jdtNode);
     token = jdtNode.getToken();
+    Object constantValue = jdtNode.resolveConstantExpressionValue();
+    assert constantValue instanceof Number;
+    value = (Number) constantValue;
   }
 
   public NumberLiteral(NumberLiteral other) {
     super(other);
     token = other.getToken();
+    value = other.getValue();
+  }
+
+  public NumberLiteral(Number value) {
+    this.value = value;
+  }
+
+  public static NumberLiteral newIntLiteral(Integer i) {
+    return new NumberLiteral(i);
+  }
+
+  @Override
+  public Kind getKind() {
+    return Kind.NUMBER_LITERAL;
+  }
+
+  @Override
+  public ITypeBinding getTypeBinding() {
+    return typeForNumber(value);
   }
 
   public String getToken() {
     return token;
+  }
+
+  public Number getValue() {
+    return value;
   }
 
   @Override
@@ -44,5 +76,29 @@ public class NumberLiteral extends Expression {
   @Override
   public NumberLiteral copy() {
     return new NumberLiteral(this);
+  }
+
+  @Override
+  public void validateInner() {
+    super.validateInner();
+    Preconditions.checkNotNull(value);
+  }
+
+  private ITypeBinding typeForNumber(Number value) {
+    if (value instanceof Byte) {
+      return Types.resolveJavaType("byte");
+    } else if (value instanceof Short) {
+      return Types.resolveJavaType("short");
+    } else if (value instanceof Integer) {
+      return Types.resolveJavaType("int");
+    } else if (value instanceof Long) {
+      return Types.resolveJavaType("long");
+    } else if (value instanceof Float) {
+      return Types.resolveJavaType("float");
+    } else if (value instanceof Double) {
+      return Types.resolveJavaType("double");
+    } else {
+      throw new AssertionError("Invalid number literal type: " + value.getClass().getName());
+    }
   }
 }

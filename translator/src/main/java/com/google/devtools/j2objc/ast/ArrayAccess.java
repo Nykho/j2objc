@@ -14,18 +14,58 @@
 
 package com.google.devtools.j2objc.ast;
 
+import org.eclipse.jdt.core.dom.ITypeBinding;
+
 /**
  * Array access node type.
  */
 public class ArrayAccess extends Expression {
 
+  private final ChildLink<Expression> array = ChildLink.create(Expression.class, this);
+  private final ChildLink<Expression> index = ChildLink.create(Expression.class, this);
+
+  public ArrayAccess(org.eclipse.jdt.core.dom.ArrayAccess jdtNode) {
+    super(jdtNode);
+    array.set((Expression) TreeConverter.convert(jdtNode.getArray()));
+    index.set((Expression) TreeConverter.convert(jdtNode.getIndex()));
+  }
+
   public ArrayAccess(ArrayAccess other) {
     super(other);
+    array.copyFrom(other.getArray());
+    index.copyFrom(other.getIndex());
+  }
+
+  @Override
+  public Kind getKind() {
+    return Kind.ARRAY_ACCESS;
+  }
+
+  @Override
+  public ITypeBinding getTypeBinding() {
+    Expression arrayNode = array.get();
+    ITypeBinding arrayType = arrayNode != null ? arrayNode.getTypeBinding() : null;
+    return arrayType != null ? arrayType.getComponentType() : null;
+  }
+
+  public Expression getArray() {
+    return array.get();
+  }
+
+  public Expression getIndex() {
+    return index.get();
+  }
+
+  public void setIndex(Expression newIndex) {
+    index.set(newIndex);
   }
 
   @Override
   protected void acceptInner(TreeVisitor visitor) {
-    visitor.visit(this);
+    if (visitor.visit(this)) {
+      array.accept(visitor);
+      index.accept(visitor);
+    }
     visitor.endVisit(this);
   }
 

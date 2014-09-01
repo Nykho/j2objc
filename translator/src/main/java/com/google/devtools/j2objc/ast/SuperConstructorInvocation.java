@@ -14,8 +14,6 @@
 
 package com.google.devtools.j2objc.ast;
 
-import com.google.devtools.j2objc.types.Types;
-
 import org.eclipse.jdt.core.dom.IMethodBinding;
 
 import java.util.List;
@@ -26,11 +24,13 @@ import java.util.List;
 public class SuperConstructorInvocation extends Statement {
 
   private IMethodBinding methodBinding = null;
-  private ChildList<Expression> arguments = ChildList.create(Expression.class, this);
+  private final ChildLink<Expression> expression = ChildLink.create(Expression.class, this);
+  private final ChildList<Expression> arguments = ChildList.create(Expression.class, this);
 
   public SuperConstructorInvocation(org.eclipse.jdt.core.dom.SuperConstructorInvocation jdtNode) {
     super(jdtNode);
-    methodBinding = Types.getMethodBinding(jdtNode);
+    methodBinding = jdtNode.resolveConstructorBinding();
+    expression.set((Expression) TreeConverter.convert(jdtNode.getExpression()));
     for (Object argument : jdtNode.arguments()) {
       arguments.add((Expression) TreeConverter.convert(argument));
     }
@@ -39,11 +39,33 @@ public class SuperConstructorInvocation extends Statement {
   public SuperConstructorInvocation(SuperConstructorInvocation other) {
     super(other);
     methodBinding = other.getMethodBinding();
+    expression.copyFrom(other.getExpression());
     arguments.copyFrom(other.getArguments());
+  }
+
+  public SuperConstructorInvocation(IMethodBinding methodBinding) {
+    this.methodBinding = methodBinding;
+  }
+
+  @Override
+  public Kind getKind() {
+    return Kind.SUPER_CONSTRUCTOR_INVOCATION;
   }
 
   public IMethodBinding getMethodBinding() {
     return methodBinding;
+  }
+
+  public void setMethodBinding(IMethodBinding newMethodBinding) {
+    methodBinding = newMethodBinding;
+  }
+
+  public Expression getExpression() {
+    return expression.get();
+  }
+
+  public void setExpression(Expression newExpression) {
+    expression.set(newExpression);
   }
 
   public List<Expression> getArguments() {
@@ -53,6 +75,7 @@ public class SuperConstructorInvocation extends Statement {
   @Override
   protected void acceptInner(TreeVisitor visitor) {
     if (visitor.visit(this)) {
+      expression.accept(visitor);
       arguments.accept(visitor);
     }
     visitor.endVisit(this);

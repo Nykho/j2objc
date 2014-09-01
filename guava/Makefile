@@ -15,11 +15,13 @@
 # Author: Keith Stanger
 # TODO(kstanger): Build a fat library to distribute.
 
+SUFFIXES:
+
 default: dist
 
 include environment.mk
 
-JAVA_SOURCES = \
+JAVA_SOURCES := \
     $(filter-out $(SOURCES_TO_EXCLUDE:%=$(SRC_DIR)/%),$(shell find $(SRC_DIR) -name *.java))
 
 JAVA_SOURCES_MANIFEST = $(BUILD_DIR)/java_sources.mf

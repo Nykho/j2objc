@@ -14,8 +14,6 @@
 
 package com.google.devtools.j2objc.ast;
 
-import com.google.devtools.j2objc.types.Types;
-
 import org.eclipse.jdt.core.dom.IVariableBinding;
 
 /**
@@ -30,7 +28,7 @@ public abstract class VariableDeclaration extends TreeNode {
 
   public VariableDeclaration(org.eclipse.jdt.core.dom.VariableDeclaration jdtNode) {
     super(jdtNode);
-    variableBinding = Types.getVariableBinding(jdtNode);
+    variableBinding = jdtNode.resolveBinding();
     extraDimensions = jdtNode.getExtraDimensions();
     name.set((SimpleName) TreeConverter.convert(jdtNode.getName()));
     initializer.set((Expression) TreeConverter.convert(jdtNode.getInitializer()));
@@ -44,18 +42,27 @@ public abstract class VariableDeclaration extends TreeNode {
     initializer.copyFrom(other.getInitializer());
   }
 
-  public VariableDeclaration(IVariableBinding variableBinding) {
+  public VariableDeclaration(IVariableBinding variableBinding, Expression initializer) {
     super();
     this.variableBinding = variableBinding;
     name.set(new SimpleName(variableBinding));
+    this.initializer.set(initializer);
   }
 
   public IVariableBinding getVariableBinding() {
     return variableBinding;
   }
 
+  public void setVariableBinding(IVariableBinding newVariableBinding) {
+    variableBinding = newVariableBinding;
+  }
+
   public int getExtraDimensions() {
     return extraDimensions;
+  }
+
+  public void setExtraDimensions(int newExtraDimensions) {
+    extraDimensions = newExtraDimensions;
   }
 
   public SimpleName getName() {
@@ -64,5 +71,9 @@ public abstract class VariableDeclaration extends TreeNode {
 
   public Expression getInitializer() {
     return initializer.get();
+  }
+
+  public void setInitializer(Expression newInitializer) {
+    initializer.set(newInitializer);
   }
 }

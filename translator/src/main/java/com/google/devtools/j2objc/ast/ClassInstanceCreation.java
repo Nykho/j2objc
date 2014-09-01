@@ -14,9 +14,8 @@
 
 package com.google.devtools.j2objc.ast;
 
-import com.google.devtools.j2objc.types.Types;
-
 import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.ITypeBinding;
 
 import java.util.List;
 
@@ -34,7 +33,7 @@ public class ClassInstanceCreation extends Expression {
 
   public ClassInstanceCreation(org.eclipse.jdt.core.dom.ClassInstanceCreation jdtNode) {
     super(jdtNode);
-    methodBinding = Types.getMethodBinding(jdtNode);
+    methodBinding = jdtNode.resolveConstructorBinding();
     expression.set((Expression) TreeConverter.convert(jdtNode.getExpression()));
     type.set((Type) TreeConverter.convert(jdtNode.getType()));
     for (Object argument : jdtNode.arguments()) {
@@ -53,16 +52,43 @@ public class ClassInstanceCreation extends Expression {
     anonymousClassDeclaration.copyFrom(other.getAnonymousClassDeclaration());
   }
 
+  public ClassInstanceCreation(IMethodBinding methodBinding) {
+    this.methodBinding = methodBinding;
+    type.set(Type.newType(methodBinding.getDeclaringClass()));
+  }
+
+  @Override
+  public Kind getKind() {
+    return Kind.CLASS_INSTANCE_CREATION;
+  }
+
   public IMethodBinding getMethodBinding() {
     return methodBinding;
+  }
+
+  public void setMethodBinding(IMethodBinding newMethodBinding) {
+    methodBinding = newMethodBinding;
+  }
+
+  @Override
+  public ITypeBinding getTypeBinding() {
+    return methodBinding != null ? methodBinding.getDeclaringClass() : null;
   }
 
   public Expression getExpression() {
     return expression.get();
   }
 
+  public void setExpression(Expression newExpression) {
+    expression.set(newExpression);
+  }
+
   public Type getType() {
     return type.get();
+  }
+
+  public void setType(Type newType) {
+    type.set(newType);
   }
 
   public List<Expression> getArguments() {
@@ -71,6 +97,10 @@ public class ClassInstanceCreation extends Expression {
 
   public AnonymousClassDeclaration getAnonymousClassDeclaration() {
     return anonymousClassDeclaration.get();
+  }
+
+  public void setAnonymousClassDeclaration(AnonymousClassDeclaration newAnonymousClassDeclaration) {
+    anonymousClassDeclaration.set(newAnonymousClassDeclaration);
   }
 
   @Override

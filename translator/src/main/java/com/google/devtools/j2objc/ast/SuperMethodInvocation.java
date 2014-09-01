@@ -14,9 +14,8 @@
 
 package com.google.devtools.j2objc.ast;
 
-import com.google.devtools.j2objc.types.Types;
-
 import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.ITypeBinding;
 
 import java.util.List;
 
@@ -32,7 +31,7 @@ public class SuperMethodInvocation extends Expression {
 
   public SuperMethodInvocation(org.eclipse.jdt.core.dom.SuperMethodInvocation jdtNode) {
     super(jdtNode);
-    methodBinding = Types.getMethodBinding(jdtNode);
+    methodBinding = jdtNode.resolveMethodBinding();
     qualifier.set((Name) TreeConverter.convert(jdtNode.getQualifier()));
     name.set((SimpleName) TreeConverter.convert(jdtNode.getName()));
     for (Object argument : jdtNode.arguments()) {
@@ -49,17 +48,34 @@ public class SuperMethodInvocation extends Expression {
   }
 
   public SuperMethodInvocation(IMethodBinding methodBinding) {
-    super(methodBinding.getReturnType());
     this.methodBinding = methodBinding;
     name.set(new SimpleName(methodBinding));
+  }
+
+  @Override
+  public Kind getKind() {
+    return Kind.SUPER_METHOD_INVOCATION;
   }
 
   public IMethodBinding getMethodBinding() {
     return methodBinding;
   }
 
+  public void setMethodBinding(IMethodBinding newMethodBinding) {
+    methodBinding = newMethodBinding;
+  }
+
+  @Override
+  public ITypeBinding getTypeBinding() {
+    return methodBinding != null ? methodBinding.getReturnType() : null;
+  }
+
   public Name getQualifier() {
     return qualifier.get();
+  }
+
+  public void setQualifier(Name newQualifier) {
+    qualifier.set(newQualifier);
   }
 
   public SimpleName getName() {

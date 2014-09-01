@@ -31,8 +31,17 @@ public class ContinueStatement extends Statement {
     label.copyFrom(other.getLabel());
   }
 
+  @Override
+  public Kind getKind() {
+    return Kind.CONTINUE_STATEMENT;
+  }
+
   public SimpleName getLabel() {
     return label.get();
+  }
+
+  public void setLabel(SimpleName newLabel) {
+    label.set(newLabel);
   }
 
   @Override

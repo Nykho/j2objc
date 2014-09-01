@@ -34,12 +34,27 @@ public class WhileStatement extends Statement {
     body.copyFrom(other.getBody());
   }
 
+  public WhileStatement() {}
+
+  @Override
+  public Kind getKind() {
+    return Kind.WHILE_STATEMENT;
+  }
+
   public Expression getExpression() {
     return expression.get();
   }
 
+  public void setExpression(Expression newExpression) {
+    expression.set(newExpression);
+  }
+
   public Statement getBody() {
     return body.get();
+  }
+
+  public void setBody(Statement newBody) {
+    body.set(newBody);
   }
 
   @Override

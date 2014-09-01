@@ -16,6 +16,8 @@
 #
 # Author: Tom Ball, Keith Stanger
 
+SUFFIXES:
+
 CWD = .
 SOURCE_DIR = src/main
 JAVA_SOURCE_DIR = $(SOURCE_DIR)/java
@@ -137,6 +139,7 @@ JAVA_SOURCES = \
 	ast/TryStatement.java \
 	ast/Type.java \
 	ast/TypeDeclaration.java \
+	ast/TypeDeclarationStatement.java \
 	ast/TypeLiteral.java \
 	ast/UnionType.java \
 	ast/VariableDeclaration.java \
@@ -145,6 +148,7 @@ JAVA_SOURCES = \
 	ast/VariableDeclarationStatement.java \
 	ast/WhileStatement.java \
 	gen/HiddenFieldDetector.java \
+	gen/LiteralGenerator.java \
 	gen/MetadataGenerator.java \
 	gen/ObjectiveCHeaderGenerator.java \
 	gen/ObjectiveCImplementationGenerator.java \
@@ -153,7 +157,6 @@ JAVA_SOURCES = \
 	gen/SourceBuilder.java \
 	gen/SourceFileGenerator.java \
 	gen/StatementGenerator.java \
-	translate/ASTFactory.java \
 	translate/AnonymousClassConverter.java \
 	translate/ArrayRewriter.java \
 	translate/Autoboxer.java \
@@ -178,8 +181,6 @@ JAVA_SOURCES = \
 	translate/UnsequencedExpressionRewriter.java \
 	types/AbstractBinding.java \
 	types/AbstractTypeBinding.java \
-	types/BindingMapBuilder.java \
-	types/BindingMapVerifier.java \
 	types/GeneratedMethodBinding.java \
 	types/GeneratedPackageBinding.java \
 	types/GeneratedTypeBinding.java \
@@ -192,7 +193,7 @@ JAVA_SOURCES = \
 	types/IOSParameter.java \
 	types/IOSTypeBinding.java \
 	types/JavaMethod.java \
-	types/NodeCopier.java \
+	types/NullTypeBinding.java \
 	types/PointerTypeBinding.java \
 	types/RenamedTypeBinding.java \
 	types/Types.java \

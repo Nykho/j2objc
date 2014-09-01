@@ -40,6 +40,16 @@ public class SimpleName extends Name {
     identifier = binding.getName();
   }
 
+  public SimpleName(String identifier) {
+    super((IBinding) null);
+    this.identifier = identifier;
+  }
+
+  @Override
+  public Kind getKind() {
+    return Kind.SIMPLE_NAME;
+  }
+
   public String getIdentifier() {
     return identifier;
   }
@@ -49,11 +59,6 @@ public class SimpleName extends Name {
   }
 
   public String getFullyQualifiedName() {
-    return identifier;
-  }
-
-  @Override
-  public String toString() {
     return identifier;
   }
 

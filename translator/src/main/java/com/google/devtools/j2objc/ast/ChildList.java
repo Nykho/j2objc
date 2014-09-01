@@ -49,6 +49,14 @@ class ChildList<T extends TreeNode> extends AbstractList<T> {
   }
 
   @Override
+  public T set(int index, T node) {
+    ChildLink<T> link = delegate.get(index);
+    T oldNode = link.get();
+    link.set(node);
+    return oldNode;
+  }
+
+  @Override
   public void add(int index, T node) {
     ChildLink<T> link = new Link(childType, parent);
     link.set(node);
@@ -77,6 +85,11 @@ class ChildList<T extends TreeNode> extends AbstractList<T> {
     for (ChildLink<?> link : array) {
       link.accept(visitor);
     }
+  }
+
+  @Override
+  public String toString() {
+    return delegate.toString();
   }
 
   private class Link extends ChildLink<T> {

@@ -14,6 +14,10 @@
 
 package com.google.devtools.j2objc.ast;
 
+import com.google.devtools.j2objc.types.Types;
+
+import org.eclipse.jdt.core.dom.ITypeBinding;
+
 /**
  * Node type for character literal values.
  */
@@ -29,6 +33,20 @@ public class CharacterLiteral extends Expression {
   public CharacterLiteral(CharacterLiteral other) {
     super(other);
     charValue = other.charValue();
+  }
+
+  public CharacterLiteral(char charValue) {
+    this.charValue = charValue;
+  }
+
+  @Override
+  public Kind getKind() {
+    return Kind.CHARACTER_LITERAL;
+  }
+
+  @Override
+  public ITypeBinding getTypeBinding() {
+    return Types.resolveJavaType("char");
   }
 
   public char charValue() {

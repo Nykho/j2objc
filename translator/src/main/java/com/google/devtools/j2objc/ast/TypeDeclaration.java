@@ -14,6 +14,8 @@
 
 package com.google.devtools.j2objc.ast;
 
+import org.eclipse.jdt.core.dom.ITypeBinding;
+
 import java.util.List;
 
 /**
@@ -41,12 +43,33 @@ public class TypeDeclaration extends AbstractTypeDeclaration {
     superInterfaceTypes.copyFrom(other.getSuperInterfaceTypes());
   }
 
+  public TypeDeclaration(ITypeBinding typeBinding) {
+    super(typeBinding);
+    isInterface = typeBinding.isInterface();
+    ITypeBinding superclassTypeBinding = typeBinding.getSuperclass();
+    if (superclassTypeBinding != null) {
+      superclassType.set(Type.newType(superclassTypeBinding));
+    }
+    for (ITypeBinding interfaceTypeBinding : typeBinding.getInterfaces()) {
+      superInterfaceTypes.add(Type.newType(interfaceTypeBinding));
+    }
+  }
+
+  @Override
+  public Kind getKind() {
+    return Kind.TYPE_DECLARATION;
+  }
+
   public boolean isInterface() {
     return isInterface;
   }
 
   public Type getSuperclassType() {
     return superclassType.get();
+  }
+
+  public void setSuperclassType(Type newSuperclassType) {
+    superclassType.set(newSuperclassType);
   }
 
   public List<Type> getSuperInterfaceTypes() {

@@ -16,7 +16,7 @@
 #
 # Author: Tom Ball
 
-.SUFFIXES: .java .m
+.SUFFIXES:
 .PHONY: default clean
 
 include environment.mk
@@ -209,6 +209,8 @@ JAVA_SOURCES = \
 	com/google/j2objc/security/IosSecureRandomImpl.java \
 	com/google/j2objc/security/IosSecurityProvider.java \
 	com/google/j2objc/security/IosSHAMessageDigest.java \
+	com/google/j2objc/security/cert/IosCertificateFactory.java \
+	com/google/j2objc/security/cert/IosX509Certificate.java \
 	com/google/j2objc/util/ScopedLocalRef.java \
 	dalvik/system/BlockGuard.java \
 	dalvik/system/CloseGuard.java \
@@ -249,6 +251,7 @@ JAVA_SOURCES = \
 	java/io/InterruptedIOException.java \
 	java/io/InvalidClassException.java \
 	java/io/InvalidObjectException.java \
+	java/io/IOError.java \
 	java/io/IOException.java \
 	java/io/LineNumberInputStream.java \
 	java/io/LineNumberReader.java \
@@ -314,6 +317,7 @@ JAVA_SOURCES = \
 	java/lang/ExceptionInInitializerError.java \
 	java/lang/Float.java \
 	java/lang/HexStringParser.java \
+	java/lang/IllegalAccessError.java \
 	java/lang/IllegalAccessException.java \
 	java/lang/IllegalArgumentException.java \
 	java/lang/IllegalMonitorStateException.java \
@@ -852,6 +856,7 @@ JAVA_SOURCES = \
 	java/util/zip/ZipFile.java \
 	java/util/zip/ZipInputStream.java \
 	java/util/zip/ZipOutputStream.java \
+	javax/lang/model/element/Modifier.java \
 	javax/security/auth/x500/X500Principal.java \
 	javax/security/cert/Certificate.java \
 	javax/security/cert/CertificateEncodingException.java \
@@ -924,6 +929,7 @@ JAVA_SOURCES = \
 	org/apache/harmony/security/asn1/ASN1Constructed.java \
 	org/apache/harmony/security/asn1/ASN1Exception.java \
 	org/apache/harmony/security/asn1/ASN1Explicit.java \
+	org/apache/harmony/security/asn1/ASN1Integer.java \
 	org/apache/harmony/security/asn1/ASN1Oid.java \
 	org/apache/harmony/security/asn1/ASN1Primitive.java \
 	org/apache/harmony/security/asn1/ASN1Sequence.java \
@@ -993,11 +999,11 @@ MAIN_OBJ = J2ObjCMain.o
 JAVA_SOURCES_MANIFEST = $(BUILD_DIR)/java_sources.mf
 OBJC_SOURCES_MANIFEST = $(BUILD_DIR)/objc_sources.mf
 
-STUB_JAVA_SOURCES = $(shell find $(STUBS_DIR) -name *.java)
+STUB_JAVA_SOURCES := $(shell find $(STUBS_DIR) -name *.java)
 ALL_JAVA_SOURCES = $(JAVA_SOURCES) $(IOS_JAVA_OBJS:.o=.java) $(IOS_INTERFACES:.h=.java) \
     $(JRE_INTERFACES:.h=.java)
 JAVA_TO_TRANSLATE = $(JRE_INTERFACES:%.h=%.java) $(JAVA_SOURCES)
-SOURCE_HEADERS = $(shell find $(EMULATION_CLASS_DIR) -name *.h)
+SOURCE_HEADERS := $(shell find $(EMULATION_CLASS_DIR) -name *.h)
 INCLUDES = $(JAVA_TO_TRANSLATE:.java=.h) $(SOURCE_HEADERS:$(EMULATION_CLASS_DIR)/%=%)
 DIST_INCLUDES = $(INCLUDES:%=$(DIST_INCLUDE_DIR)/%)
 ARCH_INCLUDES = $(INCLUDES:%=$(ARCH_INCLUDE_DIR)/%)

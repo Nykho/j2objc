@@ -14,6 +14,8 @@
 
 package com.google.devtools.j2objc.ast;
 
+import org.eclipse.jdt.core.dom.ITypeBinding;
+
 import java.util.List;
 
 /**
@@ -21,10 +23,12 @@ import java.util.List;
  */
 public class ArrayInitializer extends Expression {
 
+  private ITypeBinding typeBinding = null;
   private ChildList<Expression> expressions = ChildList.create(Expression.class, this);
 
   public ArrayInitializer(org.eclipse.jdt.core.dom.ArrayInitializer jdtNode) {
     super(jdtNode);
+    typeBinding = jdtNode.resolveTypeBinding();
     for (Object expression : jdtNode.expressions()) {
       expressions.add((Expression) TreeConverter.convert(expression));
     }
@@ -32,7 +36,22 @@ public class ArrayInitializer extends Expression {
 
   public ArrayInitializer(ArrayInitializer other) {
     super(other);
+    typeBinding = other.getTypeBinding();
     expressions.copyFrom(other.getExpressions());
+  }
+
+  public ArrayInitializer(ITypeBinding typeBinding) {
+    this.typeBinding = typeBinding;
+  }
+
+  @Override
+  public Kind getKind() {
+    return Kind.ARRAY_INITIALIZER;
+  }
+
+  @Override
+  public ITypeBinding getTypeBinding() {
+    return typeBinding;
   }
 
   public List<Expression> getExpressions() {

@@ -31,19 +31,15 @@ import com.google.devtools.j2objc.types.PointerTypeBinding;
 import com.google.devtools.j2objc.types.Types;
 import com.google.j2objc.annotations.ObjectiveCName;
 
-import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.IAnnotationBinding;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.IPackageBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
-import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.PrimitiveType;
-import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 
-import java.io.File;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -63,6 +59,11 @@ public class NameTable {
   public static final String CLINIT_NAME = "initialize";
   public static final String DEALLOC_METHOD = "dealloc";
   public static final String FINALIZE_METHOD = "finalize";
+
+  // The JDT compiler requires package-info files be named as "package-info",
+  // but that's an illegal type to generate.
+  public static final String PACKAGE_INFO_FILE_NAME = "package-info";
+  public static final String PACKAGE_INFO_MAIN_TYPE = "package_info";
 
   // The self name in Java is reserved in Objective-C, but functionized methods
   // actually want the first parameter to be self. This is an internal name,
@@ -305,22 +306,8 @@ public class NameTable {
     return binding;
   }
 
-  /**
-   * Returns a name for a SimpleName that may have been renamed by a
-   * translation phase.
-   *
-   * @return the new name, or the old name if no renaming exists
-   */
-  public static String getName(SimpleName node) {
-    return getName(Types.getBinding(node));
-  }
-
   public static boolean isRenamed(IBinding binding) {
     return instance.renamings.containsKey(binding);
-  }
-
-  public static boolean isRenamed(SimpleName node) {
-    return isRenamed(Types.getBinding(node));
   }
 
   /**
@@ -334,13 +321,6 @@ public class NameTable {
           oldName.toString(), previousName, oldName, newName));
     }
     instance.renamings.put(oldName, newName);
-  }
-
-  /**
-   * Adds a SimpleName to the renamings map.
-   */
-  public static void rename(SimpleName node, String newName) {
-    rename(Types.getBinding(node), newName);
   }
 
   /**
@@ -413,6 +393,10 @@ public class NameTable {
 
   private static String getParameterTypeKeyword(ITypeBinding type) {
     if (isIdType(type) || type.isTypeVariable()) {
+      ITypeBinding[] bounds = type.getTypeBounds();
+      if (bounds.length > 0) {
+        return getParameterTypeKeyword(bounds[0]);
+      }
       return ID_TYPE;
     } else if (type.isPrimitive()) {
       return type.getName();
@@ -572,10 +556,6 @@ public class NameTable {
    * name plus the inner class name; for example, java.util.ArrayList.ListItr's
    * name is "JavaUtilArrayList_ListItr".
    */
-  public static String getFullName(AbstractTypeDeclaration typeDecl) {
-    return getFullName(Types.getTypeBinding(typeDecl));
-  }
-
   public static String getFullName(ITypeBinding binding) {
     binding = Types.mapType(binding.getErasure());  // Make sure type variables aren't included.
     String suffix = binding.isEnum() ? "Enum" : "";
@@ -614,10 +594,6 @@ public class NameTable {
    * Returns a "Type_method" function name for static methods, such as from
    * enum types.
    */
-  public static String makeFunctionName(AbstractTypeDeclaration cls, MethodDeclaration method) {
-    return makeFunctionName(Types.getTypeBinding(cls), Types.getMethodBinding(method));
-  }
-
   public static String makeFunctionName(ITypeBinding classBinding, IMethodBinding methodBinding) {
     String className = getFullName(classBinding);
     String methodName = methodBinding.getName();
@@ -644,10 +620,10 @@ public class NameTable {
 
   public static String getMainTypeFullName(CompilationUnit unit) {
     PackageDeclaration pkg = unit.getPackage();
-    if (pkg != null) {
-      return getPrefix(pkg.getName().getFullyQualifiedName()) + unit.getMainTypeName();
-    } else {
+    if (pkg.isDefaultPackage()) {
       return unit.getMainTypeName();
+    } else {
+      return getPrefix(pkg.getName().getFullyQualifiedName()) + unit.getMainTypeName();
     }
   }
 

@@ -22,13 +22,17 @@ import org.eclipse.jdt.core.dom.ASTNode;
 public abstract class TreeNode {
 
   private ChildLink<? extends TreeNode> owner = null;
+  private Key key;
   private int startPosition = -1;
   private int length = 0;
   private int lineNumber = -1;
 
-  protected TreeNode() {}
+  protected TreeNode() {
+    key = new Key();
+  }
 
   protected TreeNode(ASTNode jdtNode) {
+    this();
     startPosition = jdtNode.getStartPosition();
     length = jdtNode.getLength();
     ASTNode root = jdtNode.getRoot();
@@ -38,9 +42,20 @@ public abstract class TreeNode {
   }
 
   protected TreeNode(TreeNode other) {
+    key = other.getKey();
     startPosition = other.getStartPosition();
     length = other.getLength();
     lineNumber = other.getLineNumber();
+  }
+
+  public abstract Kind getKind();
+
+  public Key getKey() {
+    return key;
+  }
+
+  public void setKey(Key newKey) {
+    key = newKey;
   }
 
   public TreeNode getParent() {
@@ -108,4 +123,104 @@ public abstract class TreeNode {
   }
 
   public void validateInner() {}
+
+  public String toString() {
+    try {
+      return DebugASTPrinter.toString(this);
+    } catch (RuntimeException e) {
+      // Debugger may sometimes call toString methods on an instance that is partially initialized.
+      return super.toString();
+    }
+  }
+
+  /**
+   * Key type for associating nodes with additional data. Keys are normally
+   * unique to a node, except that copies keep the same key as the original.
+   */
+  public static class Key {
+    private Key() {}
+  }
+
+  /**
+   * Enumeration of all the node types. Useful for switch statements.
+   */
+  public enum Kind {
+    ANNOTATION_TYPE_DECLARATION,
+    ANNOTATION_TYPE_MEMBER_DECLARATION,
+    ANONYMOUS_CLASS_DECLARATION,
+    ARRAY_ACCESS,
+    ARRAY_CREATION,
+    ARRAY_INITIALIZER,
+    ARRAY_TYPE,
+    ASSERT_STATEMENT,
+    ASSIGNMENT,
+    BLOCK,
+    BLOCK_COMMENT,
+    BOOLEAN_LITERAL,
+    BREAK_STATEMENT,
+    CAST_EXPRESSION,
+    CATCH_CLAUSE,
+    CHARACTER_LITERAL,
+    CLASS_INSTANCE_CREATION,
+    COMPILATION_UNIT,
+    CONDITIONAL_EXPRESSION,
+    CONSTRUCTOR_INVOCATION,
+    CONTINUE_STATEMENT,
+    DO_STATEMENT,
+    EMPTY_STATEMENT,
+    ENHANCED_FOR_STATEMENT,
+    ENUM_CONSTANT_DECLARATION,
+    ENUM_DECLARATION,
+    EXPRESSION_STATEMENT,
+    FIELD_ACCESS,
+    FIELD_DECLARATION,
+    FOR_STATEMENT,
+    IF_STATEMENT,
+    INFIX_EXPRESSION,
+    INITIALIZER,
+    INSTANCEOF_EXPRESSION,
+    JAVADOC,
+    LABELED_STATEMENT,
+    LINE_COMMENT,
+    MARKER_ANNOTATION,
+    MEMBER_VALUE_PAIR,
+    METHOD_DECLARATION,
+    METHOD_INVOCATION,
+    NORMAL_ANNOTATION,
+    NULL_LITERAL,
+    NUMBER_LITERAL,
+    PACKAGE_DECLARATION,
+    PARAMETERIZED_TYPE,
+    PARENTHESIZED_EXPRESSION,
+    POSTFIX_EXPRESSION,
+    PREFIX_EXPRESSION,
+    PRIMITIVE_TYPE,
+    QUALIFIED_NAME,
+    QUALIFIED_TYPE,
+    RETURN_STATEMENT,
+    SIMPLE_NAME,
+    SIMPLE_TYPE,
+    SINGLE_MEMBER_ANNOTATION,
+    SINGLE_VARIABLE_DECLARATION,
+    STRING_LITERAL,
+    SUPER_CONSTRUCTOR_INVOCATION,
+    SUPER_METHOD_INVOCATION,
+    SUPER_FIELD_ACCESS,
+    SWITCH_CASE,
+    SWITCH_STATEMENT,
+    SYNCHRONIZED_STATEMENT,
+    TAG_ELEMENT,
+    TEXT_ELEMENT,
+    THIS_EXPRESSION,
+    THROW_STATEMENT,
+    TRY_STATEMENT,
+    TYPE_DECLARATION,
+    TYPE_DECLARATION_STATEMENT,
+    TYPE_LITERAL,
+    UNION_TYPE,
+    VARIABLE_DECLARATION_EXPRESSION,
+    VARIABLE_DECLARATION_FRAGMENT,
+    VARIABLE_DECLARATION_STATEMENT,
+    WHILE_STATEMENT
+  }
 }

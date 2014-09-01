@@ -21,6 +21,8 @@ import com.google.common.collect.Lists;
 import com.google.devtools.j2objc.util.BindingUtil;
 
 import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 
 import java.io.File;
@@ -33,6 +35,9 @@ import java.util.List;
 public class TreeUtil {
 
   public static <T extends TreeNode> T remove(T node) {
+    if (node == null) {
+      return null;
+    }
     node.remove();
     return node;
   }
@@ -76,60 +81,52 @@ public class TreeUtil {
     return Lists.newArrayList(getRuntimeAnnotations(annotations));
   }
 
+  public static boolean hasAnnotation(Class<?> annotationClass, List<Annotation> annotations) {
+    for (Annotation annotation : annotations) {
+      ITypeBinding annotationType = annotation.getAnnotationBinding().getAnnotationType();
+      if (annotationType.getQualifiedName().equals(annotationClass.getName())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static <T extends TreeNode> T getNearestAncestorWithType(Class<T> type, TreeNode node) {
+    while (node != null) {
+      if (type.isInstance(node)) {
+        return type.cast(node);
+      }
+      node = node.getParent();
+    }
+    return null;
+  }
+
   /**
    * Returns the method which is the parent of the specified node.
    */
   public static MethodDeclaration getOwningMethod(TreeNode node) {
-    TreeNode n = node;
-    while (n != null) {
-      if (n instanceof MethodDeclaration) {
-        return (MethodDeclaration) n;
-      }
-      n = n.getParent();
-    }
-    return null;
+    return getNearestAncestorWithType(MethodDeclaration.class, node);
   }
 
   /**
    * Returns the type declaration which the specified node is part of.
    */
   public static AbstractTypeDeclaration getOwningType(TreeNode node) {
-    TreeNode n = node;
-    while (n != null) {
-      if (n instanceof AbstractTypeDeclaration) {
-        return (AbstractTypeDeclaration) n;
-      }
-      n = n.getParent();
-    }
-    return null;
+    return getNearestAncestorWithType(AbstractTypeDeclaration.class, node);
   }
 
   /**
    * Returns the statement which is the parent of the specified node.
    */
   public static Statement getOwningStatement(TreeNode node) {
-    TreeNode n = node;
-    while (n != null) {
-      if (n instanceof Statement) {
-        return (Statement) n;
-      }
-      n = n.getParent();
-    }
-    return null;
+    return getNearestAncestorWithType(Statement.class, node);
   }
 
   /**
    * Gets the CompilationUnit ancestor of this node.
    */
   public static CompilationUnit getCompilationUnit(TreeNode node) {
-    TreeNode n = node;
-    while (n != null) {
-      if (n instanceof CompilationUnit) {
-        return (CompilationUnit) n;
-      }
-      n = n.getParent();
-    }
-    return null;
+    return getNearestAncestorWithType(CompilationUnit.class, node);
   }
 
   public static Iterable<FieldDeclaration> getFieldDeclarations(AbstractTypeDeclaration node) {
@@ -167,20 +164,51 @@ public class TreeUtil {
     return Lists.newArrayList(getMethodDeclarations(node));
   }
 
+  public static List<BodyDeclaration> getBodyDeclarations(TreeNode node) {
+    if (node instanceof AbstractTypeDeclaration) {
+      return ((AbstractTypeDeclaration) node).getBodyDeclarations();
+    } else if (node instanceof AnonymousClassDeclaration) {
+      return ((AnonymousClassDeclaration) node).getBodyDeclarations();
+    } else {
+      throw new AssertionError(
+          "node type does not contains body declarations: " + node.getClass().getSimpleName());
+    }
+  }
+
   /**
    * Gets a variable binding for the given expression if the expression
    * represents a variable. Returns null otherwise.
    */
   public static IVariableBinding getVariableBinding(Expression node) {
-    if (node instanceof FieldAccess) {
-      return ((FieldAccess) node).getVariableBinding();
-    } else if (node instanceof Name) {
-      IBinding binding = ((Name) node).getBinding();
-      return (binding instanceof IVariableBinding) ? (IVariableBinding) binding : null;
-    } else if (node instanceof SuperFieldAccess) {
-      return ((SuperFieldAccess) node).getVariableBinding();
+    switch (node.getKind()) {
+      case FIELD_ACCESS:
+        return ((FieldAccess) node).getVariableBinding();
+      case SUPER_FIELD_ACCESS:
+        return ((SuperFieldAccess) node).getVariableBinding();
+      case QUALIFIED_NAME:
+      case SIMPLE_NAME:
+        return getVariableBinding((Name) node);
+      default:
+        return null;
     }
-    return null;
+  }
+
+  public static IVariableBinding getVariableBinding(Name node) {
+    IBinding binding = node.getBinding();
+    return (binding instanceof IVariableBinding) ? (IVariableBinding) binding : null;
+  }
+
+  public static IMethodBinding getMethodBinding(Expression node) {
+    switch (node.getKind()) {
+      case CLASS_INSTANCE_CREATION:
+        return ((ClassInstanceCreation) node).getMethodBinding();
+      case METHOD_INVOCATION:
+        return ((MethodInvocation) node).getMethodBinding();
+      case SUPER_METHOD_INVOCATION:
+        return ((SuperMethodInvocation) node).getMethodBinding();
+      default:
+        return null;
+    }
   }
 
   /**
@@ -189,11 +217,11 @@ public class TreeUtil {
    */
   public static String getSourceFileName(CompilationUnit unit) {
     PackageDeclaration pkg = unit.getPackage();
-    if (pkg != null) {
+    if (pkg.isDefaultPackage()) {
+      return unit.getMainTypeName() + ".java";
+    } else {
       return pkg.getName().getFullyQualifiedName().replace('.', File.separatorChar)
           + File.separatorChar + unit.getMainTypeName() + ".java";
-    } else {
-      return unit.getMainTypeName() + ".java";
     }
   }
 
@@ -221,5 +249,46 @@ public class TreeUtil {
     node.replaceWith(block);
     block.getStatements().add(node);
     return block.getStatements();
+  }
+
+  public static void insertAfter(Statement node, Statement toInsert) {
+    asStatementList(node).add(toInsert);
+  }
+
+  public static void insertBefore(Statement node, Statement toInsert) {
+    asStatementList(node).add(0, toInsert);
+  }
+
+  /**
+   * Replaces (in place) a QualifiedName node with an equivalent FieldAccess
+   * node. This is helpful when a mutation needs to replace the qualifier with
+   * a node that has Expression type but not Name type.
+   */
+  public static FieldAccess convertToFieldAccess(QualifiedName node) {
+    TreeNode parent = node.getParent();
+    if (parent instanceof QualifiedName) {
+      FieldAccess newParent = convertToFieldAccess((QualifiedName) parent);
+      Expression expr = newParent.getExpression();
+      assert expr instanceof QualifiedName;
+      node = (QualifiedName) expr;
+    }
+    IVariableBinding variableBinding = getVariableBinding(node);
+    assert variableBinding != null : "node must be a variable";
+    FieldAccess newNode = new FieldAccess(variableBinding, remove(node.getQualifier()));
+    node.replaceWith(newNode);
+    return newNode;
+  }
+
+  public static Expression newLiteral(Object value) {
+    if (value instanceof Boolean) {
+      return new BooleanLiteral((Boolean) value);
+    } else if (value instanceof Character) {
+      return new CharacterLiteral((Character) value);
+    } else if (value instanceof Number) {
+      return new NumberLiteral((Number) value);
+    } else if (value instanceof String) {
+      return new StringLiteral((String) value);
+    }
+    throw new AssertionError("unknown constant type");
   }
 }

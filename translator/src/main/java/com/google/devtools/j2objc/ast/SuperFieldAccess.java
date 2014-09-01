@@ -14,8 +14,7 @@
 
 package com.google.devtools.j2objc.ast;
 
-import com.google.devtools.j2objc.types.Types;
-
+import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 
 /**
@@ -24,22 +23,39 @@ import org.eclipse.jdt.core.dom.IVariableBinding;
 public class SuperFieldAccess extends Expression {
 
   private IVariableBinding variableBinding = null;
+  private ChildLink<Name> qualifier = ChildLink.create(Name.class, this);
   private ChildLink<SimpleName> name = ChildLink.create(SimpleName.class, this);
 
   public SuperFieldAccess(org.eclipse.jdt.core.dom.SuperFieldAccess jdtNode) {
     super(jdtNode);
-    variableBinding = Types.getVariableBinding(jdtNode);
+    variableBinding = jdtNode.resolveFieldBinding();
+    qualifier.set((Name) TreeConverter.convert(jdtNode.getQualifier()));
     name.set((SimpleName) TreeConverter.convert(jdtNode.getName()));
   }
 
   public SuperFieldAccess(SuperFieldAccess other) {
     super(other);
     variableBinding = other.getVariableBinding();
+    qualifier.copyFrom(other.getQualifier());
     name.copyFrom(other.getName());
+  }
+
+  @Override
+  public Kind getKind() {
+    return Kind.SUPER_FIELD_ACCESS;
   }
 
   public IVariableBinding getVariableBinding() {
     return variableBinding;
+  }
+
+  @Override
+  public ITypeBinding getTypeBinding() {
+    return variableBinding != null ? variableBinding.getType() : null;
+  }
+
+  public Name getQualifier() {
+    return qualifier.get();
   }
 
   public SimpleName getName() {
@@ -49,6 +65,7 @@ public class SuperFieldAccess extends Expression {
   @Override
   protected void acceptInner(TreeVisitor visitor) {
     if (visitor.visit(this)) {
+      qualifier.accept(visitor);
       name.accept(visitor);
     }
     visitor.endVisit(this);

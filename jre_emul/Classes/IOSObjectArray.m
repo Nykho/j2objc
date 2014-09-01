@@ -25,10 +25,9 @@
 #import "java/lang/AssertionError.h"
 
 static IOSObjectArray *IOSObjectArray_NewArray(NSUInteger length, IOSClass *type) {
-  IOSObjectArray *array = [IOSObjectArray alloc];
+  IOSObjectArray *array = NSAllocateObject([IOSObjectArray class], length * sizeof(id), nil);
   array->size_ = length;
   array->elementType_ = type; // All IOSClass types are singleton so don't need to retain.
-  array->buffer_ = calloc(length, sizeof(id));
   return array;
 }
 
@@ -73,12 +72,12 @@ static IOSObjectArray *IOSObjectArray_NewArrayWithObjects(
 
 + (instancetype)arrayWithNSArray:(NSArray *)array type:(IOSClass *)type {
   NSUInteger count = [array count];
-  id __unsafe_unretained *objects =
-      (id __unsafe_unretained *) malloc(sizeof(id) * count);
-  [array getObjects:objects range:NSMakeRange(0, count)];
-  id result = [IOSObjectArray arrayWithObjects:objects count:count type:type];
-  free(objects);
-  return result;
+  IOSObjectArray *result = IOSObjectArray_NewArray(count, type);
+  [array getObjects:result->buffer_ range:NSMakeRange(0, count)];
+  for (NSUInteger i = 0; i < count; i++) {
+    [result->buffer_[i] retain];
+  }
+  return [result autorelease];
 }
 
 + (instancetype)arrayWithDimensions:(NSUInteger)dimensionCount
@@ -282,7 +281,6 @@ void CopyWithMemmove(id __strong *buffer, NSUInteger src, NSUInteger dest, NSUIn
   for (NSUInteger i = 0; i < size_; i++) {
     [buffer_[i] release];
   }
-  free(buffer_);
   [super dealloc];
 }
 

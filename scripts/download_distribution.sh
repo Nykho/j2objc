@@ -16,7 +16,7 @@ set -ev
 # limitations under the License.
 
 j2objc_version=0.9.3.2
-sha1_checksum= 93ce46ed0d5107bcdec93994698917c5f6e663b9
+sha1_checksum=93ce46ed0d5107bcdec93994698917c5f6e663b9
 
 if [[ -d dist ]]; then
   exit

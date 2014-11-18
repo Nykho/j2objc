@@ -15,8 +15,8 @@ set -ev
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-j2objc_version=0.9.3.1
-sha1_checksum=c304260c3b4e3ef1addebcd3d207fca3c69e64f4
+j2objc_version=0.9.3.2
+sha1_checksum=93ce46ed0d5107bcdec93994698917c5f6e663b9
 
 if [[ -d dist ]]; then
   exit

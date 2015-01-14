@@ -89,7 +89,9 @@
 }
 
 - (NSString *)internalName {
-  return [class_ objcName];
+	NSString *selectorName = NSStringFromSelector(selector_);
+	return [selectorName stringByReplacingOccurrencesOfString:@"init"
+	                                                 withString:[class_ objcName]];
 }
 
 @end

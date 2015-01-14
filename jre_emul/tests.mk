@@ -75,7 +75,7 @@ SUPPORT_SOURCES = \
     tests/util/CallVerificationStack.java \
     tests/util/SerializationTester.java
 
-TEST_SOURCES = \
+TEST_SOURCES := \
     AbstractExecutorServiceTest.java \
     AbstractQueuedSynchronizerTest.java \
     AbstractQueueTest.java \
@@ -219,8 +219,6 @@ TEST_SOURCES = \
     libcore/java/lang/reflect/FieldTest.java \
     libcore/java/lang/annotation/AnnotationTypeMismatchExceptionTest.java \
     libcore/java/net/DatagramSocketTest.java \
-    libcore/java/net/InetAddressTest.java \
-    libcore/java/net/InetSocketAddressTest.java \
     libcore/java/net/NetworkInterfaceTest.java \
     libcore/java/net/OldAuthenticatorTest.java \
     libcore/java/net/OldPasswordAuthenticationTest.java \
@@ -422,10 +420,20 @@ TEST_SOURCES = \
 SUITE_SOURCES = \
     ConcurrencyTests.java \
     libcore/java/io/SmallTests.java \
-    libcore/java/net/SmallTests.java \
     libcore/java/util/zip/SmallTests.java \
     org/apache/harmony/logging/tests/java/util/logging/AllTests.java \
     org/json/SmallTests.java \
+
+# These tests fail when run on Travis-CI continuous build, probably due to VM sandbox restrictions.
+# The java.net SmallTests is also skipped, since it refers to these classes; SmallTests isn't
+# run in a continuous build, just from the command-line.
+ifndef TRAVIS
+TEST_SOURCES := $(TEST_SOURCES) \
+    libcore/java/net/InetAddressTest.java \
+    libcore/java/net/InetSocketAddressTest.java
+SUITE_SOURCES := $(SUITE_SOURCES) \
+    libcore/java/net/SmallTests.java
+endif
 
 TESTS_TO_SKIP = \
     ExchangerTest.java

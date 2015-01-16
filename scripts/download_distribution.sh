@@ -15,8 +15,7 @@ set -ev
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-j2objc_version=0.9.5.1
-sha1_checksum=35a526406b3f4c1847fa1f93ca6237e5e4170d38
+j2objc_version=0.9.5.2
 
 if [[ -d dist ]]; then
   exit
@@ -24,6 +23,5 @@ fi
 
 echo "fetching j2objc"
 curl -OL https://github.com/hambroperks/j2objc/releases/download/${j2objc_version}/j2objc-${j2objc_version}.zip
-#echo "${sha1_checksum}  j2objc-${j2objc_version}.zip" | shasum -c
 unzip -o -q j2objc-${j2objc_version}.zip
 mv j2objc-${j2objc_version} dist

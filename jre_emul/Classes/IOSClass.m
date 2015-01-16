@@ -590,6 +590,33 @@ static BOOL hasModifier(IOSClass *cls, int flag) {
   return hasModifier(self, JavaLangReflectModifier_SYNTHETIC);
 }
 
+- (BOOL)isEqual:(id)other
+{
+    if ([super isEqual:other]) {
+        return YES;
+    }
+    
+    if (![other isKindOfClass:[IOSClass class]]) {
+        return NO;
+    }
+    
+    IOSClass *otherClass = (IOSClass *)other;
+
+    if ([NSStringFromClass(self.objcClass) hasSuffix:@"_ReferentSubclass"]) {
+        return class_getSuperclass(self.objcClass) == otherClass.objcClass;
+    } else if ([NSStringFromClass(otherClass.objcClass) hasSuffix:@"_ReferentSubclass"]) {
+        return class_getSuperclass(otherClass.objcClass) == self.objcClass;
+    }
+    
+    return NO;
+}
+
+- (NSUInteger)hash
+{
+    NSString *className = [NSStringFromClass(self.objcClass) stringByReplacingOccurrencesOfString:@"_ReferentSubclass" withString:@""];
+    return [className hash];
+}
+
 - (IOSObjectArray *)getInterfacesWithArrayType:(IOSClass *)arrayType {
   return [IOSObjectArray arrayWithLength:0 type:arrayType];
 }

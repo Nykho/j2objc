@@ -48,24 +48,28 @@
 }
 
 - (void)testHash {
-  IOSClass *arrayClass = [IOSClass classWithClass:[IOSArray class]];
-  XCTAssertTrue([arrayClass hash] == [arrayClass hash], @"IOSClasses should have same hash if they are the same object");
-  XCTAssertEqual([arrayClass hash], [[IOSClass classWithClass:[IOSArray class]] hash], @"Hash should be same for same class");
-  XCTAssertFalse([arrayClass hash] == [[IOSClass classWithClass:[NSObject class]] hash], @"IOSClasses should not have same hash if the classes are not referent subclasses of each other");
+  IOSClass *objectClass1 = [IOSClass classWithClass:[NSObject class]];
+  IOSClass *objectClass2 = [IOSClass classWithClass:[NSObject class]];
 
-  id array = [[[IOSArray alloc] init] autorelease];
-  [[[JavaLangRefWeakReference alloc] initWithId:array] autorelease];
-  XCTAssertTrue([[array getClass] hash] == [arrayClass hash], @"Hash of referent subclass should be same as original class");
+  XCTAssertEqual([objectClass1 hash], [objectClass1 hash], @"Hash should be same for same object");
+  XCTAssertEqual([objectClass1 hash], [objectClass2 hash], @"Hash should be same for same class");
+  XCTAssertFalse([objectClass1 hash] == [[IOSClass classWithClass:[NSArray class]] hash], @"IOSClasses should not have same hash if the classes are not referent subclasses of each other");
+
+  id object = [[[NSObject alloc] init] autorelease];
+  [[[JavaLangRefWeakReference alloc] initWithId:object] autorelease];
+  XCTAssertTrue([[object getClass] hash] == [objectClass1 hash], @"Hash of referent subclass should be same as original class");
 }
 
 - (void)testIsEqual {
-  IOSClass *exampleClass = [IOSClass classWithClass:[IOSArray class]];
-  XCTAssertTrue([exampleClass isEqual:exampleClass], @"IOSClasses should be equal if they are the same object");
-  XCTAssertTrue([exampleClass isEqual:[IOSClass classWithClass:[NSObject class]]], @"IOSClasses should be equal if they are objects of the same class");
+  IOSClass *objectClass1 = [IOSClass classWithClass:[NSObject class]];
+  IOSClass *objectClass2 = [IOSClass classWithClass:[NSObject class]];
+  
+  XCTAssertTrue([objectClass1 isEqual:objectClass2], @"IOSClasses should be equal if they are the same object");
+  XCTAssertTrue([objectClass1 isEqual:[IOSClass classWithClass:[NSObject class]]], @"IOSClasses should be equal if they are objects of the same class");
   
   id object = [[[NSObject alloc] init] autorelease];
   [[[JavaLangRefWeakReference alloc] initWithId:object] autorelease];
-  XCTAssertTrue([[object getClass] isEqual:exampleClass], @"IOSClasses should be equal if one is a referent subclass of the other");
+  XCTAssertTrue([[object getClass] isEqual:objectClass1], @"IOSClasses should be equal if one is a referent subclass of the other");
 }
 
 @end

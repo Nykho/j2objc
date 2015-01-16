@@ -28,7 +28,6 @@
 		061AA0D619FEF2E700457D2B /* ThrowableTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 061AA0D319FEF2E700457D2B /* ThrowableTest.m */; };
 		062463D41A000CE3006D52C9 /* JRETestsTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 062463D31A000CE3006D52C9 /* JRETestsTableViewController.m */; };
 		062463DA1A005995006D52C9 /* JRELogPaneViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 062463D91A005995006D52C9 /* JRELogPaneViewController.m */; };
-		06422D6B191ACB8E00C37443 /* libjre_emul.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 06619385155848D70004DAFE /* libjre_emul.a */; };
 		06422D6C191ACB9E00C37443 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 06619388155848D70004DAFE /* Foundation.framework */; };
 		0660B4A71A018C3800B643F5 /* JRELogPaneViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0660B4A51A018C3800B643F5 /* JRELogPaneViewController.xib */; };
 		0660B4AA1A02EA1C00B643F5 /* JRETestRunListener.m in Sources */ = {isa = PBXBuildFile; fileRef = 0660B4A91A02EA1C00B643F5 /* JRETestRunListener.m */; };
@@ -459,6 +458,8 @@
 		06ED87C919759EFF00633227 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 06ED87C819759EFF00633227 /* Images.xcassets */; };
 		06ED87EE1977298400633227 /* libjre_emul.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 06619385155848D70004DAFE /* libjre_emul.a */; };
 		06ED87F119772B3600633227 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 06C73F5919180E6D001D3CC8 /* libz.dylib */; };
+		277A98641A6941E200E9ED60 /* libjre_emul.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 06619385155848D70004DAFE /* libjre_emul.a */; };
+		277A98661A69519300E9ED60 /* libicucore.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 277A98651A69519300E9ED60 /* libicucore.dylib */; };
 		5110C61F19AFCBAA00FA26E1 /* ClassTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 5110C61E19AFCBAA00FA26E1 /* ClassTest.m */; };
 		5110C62519AFCC2E00FA26E1 /* ProxyTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 5110C62419AFCC2E00FA26E1 /* ProxyTest.m */; };
 /* End PBXBuildFile section */
@@ -3162,6 +3163,7 @@
 		06F2917A18972E8200676F1D /* Unsafe.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = Unsafe.m; path = build_result/Classes/sun/misc/Unsafe.m; sourceTree = "<group>"; };
 		06F6ECFE18AAABD500875541 /* Portability.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Portability.h; sourceTree = "<group>"; };
 		06FACA1118AD34B8008501DD /* BufferUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BufferUtils.h; sourceTree = "<group>"; };
+		277A98651A69519300E9ED60 /* libicucore.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libicucore.dylib; path = usr/lib/libicucore.dylib; sourceTree = SDKROOT; };
 		2CBD9CBA174A8BD7008A0086 /* NSDictionaryMap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NSDictionaryMap.h; sourceTree = "<group>"; };
 		2CBD9CBB174A8BD7008A0086 /* NSDictionaryMap.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NSDictionaryMap.m; sourceTree = "<group>"; };
 		2CBD9CBC174ABC0D008A0086 /* NSDataInputStream.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NSDataInputStream.h; sourceTree = "<group>"; };
@@ -3179,7 +3181,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				06422D6B191ACB8E00C37443 /* libjre_emul.a in Frameworks */,
+				277A98661A69519300E9ED60 /* libicucore.dylib in Frameworks */,
+				277A98641A6941E200E9ED60 /* libjre_emul.a in Frameworks */,
 				06422D6C191ACB9E00C37443 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -3234,6 +3237,7 @@
 		06619387155848D70004DAFE /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				277A98651A69519300E9ED60 /* libicucore.dylib */,
 				06C73F5919180E6D001D3CC8 /* libz.dylib */,
 				06C73F5719180E64001D3CC8 /* Security.framework */,
 				06619388155848D70004DAFE /* Foundation.framework */,
@@ -7331,7 +7335,6 @@
 		06C73D371917FDE5001D3CC8 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/junit_tests.app/junit_tests";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
@@ -7386,7 +7389,6 @@
 		06C73D381917FDE5001D3CC8 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/junit_tests.app/junit_tests";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;

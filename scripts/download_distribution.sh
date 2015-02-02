@@ -15,7 +15,7 @@ set -ev
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-j2objc_version=0.9.5.2
+j2objc_version=0.9.6
 
 if [[ -d dist ]]; then
   exit
